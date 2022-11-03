@@ -1,10 +1,14 @@
-name: Build and Push Docker Images on Release
+name: Build Image and Push to GHCR
 on:
   release:
     types: [released]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  build-and-run:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the Repo
@@ -15,11 +19,12 @@ jobs:
         with:
           just-version: "^1.5.0"
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v1
+      - name: Login to GHCR
+        uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME_RYHINO }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN_RYHINO }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pass in Git Tag and Invoke `just`
         run: just _gh_actions_parse _ci_push ${{ github.ref }}
